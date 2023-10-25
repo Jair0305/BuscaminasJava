@@ -1,25 +1,98 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
 package buscaminas;
 
+import buscaminas.Casilla;
+import buscaminas.Tablero;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import java.util.List;
+import java.util.function.Consumer;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
+/**
+ *
+ * @author chama
+ */
 public class FrmJuego extends javax.swing.JFrame {
 
-	int numFilas = 10;
+    int numFilas = 10;
 	int numColumnas = 10;
-	int numMinas = 5;
-	
+	int numMinas = 10;
 	JButton[][] botonesTablero;
+	
+	Tablero tablero;
 	
     /**
      * Creates new form FrmJuego
      */
     public FrmJuego() {
         initComponents();
+        juegoNuevo();
+    }
+    
+    void descargarControles()
+    {
+        if(botonesTablero!=null)
+        {
+            for(int i = 0; i < botonesTablero.length; i++)
+            {
+                for(int j = 0; j< botonesTablero[i].length; i++)
+                {
+                    if(botonesTablero[i]!=null)
+                    {
+                        getContentPane().remove(botonesTablero[i][j]);
+                    }
+                }
+            }
+        }
+    }
+    
+    private void juegoNuevo()
+    {
+        descargarControles();
         cargarControles();
+        crearTablero();
+        repaint();
+    }
+    
+    private void crearTablero()
+    {
+    	tablero = new Tablero(numFilas, numColumnas, numMinas);
+    	tablero.setEventoPartidaPerdida(new Consumer<List<Casilla>>() {
+			
+			@Override
+			public void accept(List<Casilla> t) {
+				for(Casilla casillasConMina: t)
+				{
+					botonesTablero[casillasConMina.getPosFila()][casillasConMina.getPosColumna()].setText("*");
+				}
+			}
+		});
+    	tablero.setEventoPartidaGanada(new Consumer<List<Casilla>>() {
+		
+    		@Override
+    		public void accept(List<Casilla> t)
+    		{
+    			for(Casilla casillaConMina: t)
+    			{
+    				botonesTablero[casillaConMina.getPosFila()][casillaConMina.getPosColumna()].setText(":)");
+    			}
+    		}
+    	});
+    	
+    	tablero.setEventoCasillaAbierta(new Consumer<Casilla>() {
+    		
+    		@Override
+    		public void accept(Casilla t)
+    		{
+    			botonesTablero[t.getPosFila()][t.getPosColumna()].setEnabled(false);
+    			botonesTablero[t.getPosFila()][t.getPosColumna()].setText(t.getMinasAlrededor()==0?"":t.getMinasAlrededor()+"");
+    		}
+    	});
     }
     
     private void cargarControles()
@@ -59,6 +132,8 @@ public class FrmJuego extends javax.swing.JFrame {
     			getContentPane().add(botonesTablero[i][j]);
     		}
     	} 
+        this.setSize(botonesTablero[numFilas-1][numColumnas-1].getX() + botonesTablero[numFilas-1][numColumnas-1].getWidth()+40,
+                botonesTablero[numFilas-1][numColumnas-1].getY() + botonesTablero[numFilas-1][numColumnas-1].getHeight() + 90);
     }
     
     private void btnClick(ActionEvent e)
@@ -67,7 +142,7 @@ public class FrmJuego extends javax.swing.JFrame {
     	String[] coordenada = btn.getName().split(",");
     	int posFila=Integer.parseInt(coordenada[0]);
     	int posColumna=Integer.parseInt(coordenada[1]);
-    	JOptionPane.showMessageDialog(rootPane, posFila+","+posColumna);
+    	tablero.seleccionarCasilla(posFila, posColumna);
     }
 
     /**
@@ -79,21 +154,73 @@ public class FrmJuego extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
+        jMenuBar1 = new javax.swing.JMenuBar();
+        menuNuevoJuego = new javax.swing.JMenu();
+        Tamano = new javax.swing.JMenuItem();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        menuNuevoJuego.setText("Juego");
+        menuNuevoJuego.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuNuevoJuegoActionPerformed(evt);
+            }
+        });
+
+        Tamano.setText("Tamaño");
+        Tamano.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                TamanoActionPerformed(evt);
+            }
+        });
+        menuNuevoJuego.add(Tamano);
+
+        jMenuItem1.setText("Nuevo");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        menuNuevoJuego.add(jMenuItem1);
+
+        jMenuBar1.add(menuNuevoJuego);
+
+        jMenu2.setText("Edit");
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 607, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 444, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>                        
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        // TODO add your handling code here:
+    }                                          
+
+    private void menuNuevoJuegoActionPerformed(java.awt.event.ActionEvent evt) {                                               
+        // TODO add your handling code here:
+        
+    }                                              
+
+    private void TamanoActionPerformed(java.awt.event.ActionEvent evt) {                                       
+                // TODO add your handling code here:
+        int num = Integer.parseInt(JOptionPane.showInputDialog("Digite tamanho de la matriz, n* n"));
+        this.numFilas=num;
+        this.numColumnas=num;
+    }                                      
 
     /**
      * @param args the command line arguments
@@ -131,5 +258,10 @@ public class FrmJuego extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify                     
+    private javax.swing.JMenuItem Tamano;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenu menuNuevoJuego;
     // End of variables declaration                   
 }

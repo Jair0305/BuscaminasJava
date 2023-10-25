@@ -2,6 +2,7 @@ package buscaminas;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Tablero {
 	
@@ -10,6 +11,13 @@ Casilla[][] casillas;
     int numFilas;
     int numColumnas;
     int numMinas;
+    
+    int numCasillasAbiertas;
+	boolean juegoTerminado;
+    
+    private Consumer<List<Casilla>> eventoPartidaPerdida;
+    public Consumer<List<Casilla>> eventoPartidaGanada;
+    private Consumer<Casilla> eventoCasillaAbierta;
 
     public Tablero(int numFilas, int numColumnas, int numMinas) {
         this.numFilas = numFilas;
@@ -138,10 +146,98 @@ Casilla[][] casillas;
     	return listaCasillas;
     }
     
+    List<Casilla> obtenerCasillasConMinas()
+    {
+    	List<Casilla> casillasConMinas = new LinkedList<>();
+		for(int i = 0; i < casillas.length; i++)
+        {
+            for(int j = 0; j<casillas[i].length;j++)
+            {
+                if(casillas[i][j].isMina())
+                {
+                	casillasConMinas.add(casillas[i][j]);
+                }
+            }
+        }
+		
+		return casillasConMinas;
+    }
+    
+    public void seleccionarCasilla(int posFila, int posColumna)
+    {
+    	eventoCasillaAbierta.accept(this.casillas[posFila][posColumna]);
+    	if(this.casillas[posFila][posColumna].isMina())
+    	{
+    		eventoPartidaPerdida.accept(obtenerCasillasConMinas());
+    		
+    	}else if(this.casillas[posFila][posColumna].getMinasAlrededor() == 0)
+    	{
+    		marcarCasillaAbierta(posFila, posColumna);
+    		List<Casilla> casillasAlrededor = obtenerCasillaAlrededor(posFila, posColumna);
+    		for(Casilla casilla: casillasAlrededor)
+    		{
+    			if(!casilla.isAbierta())
+    			{
+    				seleccionarCasilla(casilla.getPosFila(), casilla.getPosColumna());	
+    			}
+    		}
+    	}else
+    	{
+    		marcarCasillaAbierta(posFila, posColumna);
+    	}
+ 
+    	if(partidaGanada())
+    	{
+    		eventoPartidaGanada.accept(obtenerCasillasConMinas());
+    	}
+    }
+    
+    void marcarCasillaAbierta(int posFila, int posColumna)
+    {
+    	if(!this.casillas[posFila][posColumna].isAbierta())
+    	{
+    		numCasillasAbiertas++;
+    		this.casillas[posFila][posColumna].setAbierta(true);
+    	}
+    }
+    
+    boolean partidaGanada()
+    {
+    	return numCasillasAbiertas>=((numFilas*numColumnas)-numMinas);
+    }
+    
     public static void main(String[] args) {
         Tablero tablero = new Tablero(6,6,5);
         tablero.mostrarTablero();
         System.out.println("---");
         tablero.mostrarPistas();
     }
+
+	public Consumer<List<Casilla>> getEventoPartidaPerdida() {
+		return eventoPartidaPerdida;
+	}
+
+	public void setEventoPartidaPerdida(Consumer<List<Casilla>> eventoPartidaPerdida) {
+		this.eventoPartidaPerdida = eventoPartidaPerdida;
+	}
+
+	public Consumer<Casilla> getEventoCasillaAbierta() {
+		return eventoCasillaAbierta;
+	}
+
+	public void setEventoCasillaAbierta(Consumer<Casilla> eventoCasillaAbierta) {
+		this.eventoCasillaAbierta = eventoCasillaAbierta;
+	}
+
+	public Consumer<List<Casilla>> getEventoPartidaGanada() {
+		return eventoPartidaGanada;
+	}
+
+	public void setEventoPartidaGanada(Consumer<List<Casilla>> eventoPartidaGanada) {
+		this.eventoPartidaGanada = eventoPartidaGanada;
+	}
+	
+	
+    
+    
 }
